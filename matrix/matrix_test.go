@@ -51,6 +51,40 @@ func TestDims(t *testing.T) {
 	}
 }
 
+func TestScale(t *testing.T) {
+	a := Matrix{
+		{1, -2},
+		{3, 0},
+	}
+	factor := 2.0
+	expected := Matrix{
+		{2, -4},
+		{6, 0},
+	}
+
+	result := a.Scale(factor)
+	if result.Neq(expected) {
+		t.Errorf("Scale() failed. Expected %v, got %v", expected, result)
+	}
+}
+
+func TestTranspose(t *testing.T) {
+	a := Matrix{
+		{1, 2, 3},
+		{4, 5, 6},
+	}
+	expected := Matrix{
+		{1, 4},
+		{2, 5},
+		{3, 6},
+	}
+
+	result := a.T()
+	if result.Neq(expected) {
+		t.Errorf("Transpose() failed. Expected %v, got %v", expected, result)
+	}
+}
+
 func TestAdd(t *testing.T) {
 	a := Matrix{
 		{1, 2},
@@ -81,7 +115,7 @@ func TestAdd(t *testing.T) {
 	}
 }
 
-func TestAddDimensionMismatch(t *testing.T) {
+func TestAdd_DimensionMismatch(t *testing.T) {
 	defer func() {
 		if r := recover(); r == nil {
 			t.Errorf("Add did not panic on dimension mismatch")
@@ -96,15 +130,156 @@ func TestAddDimensionMismatch(t *testing.T) {
 		{3, 4},
 	}
 
-	_ = a.Add(b) // must panic
+	a.Add(b) // must panic
 }
 
-func TestAddEmptyMatrices(t *testing.T) {
+func TestAdd_EmptyMatrices(t *testing.T) {
 	a := Matrix{}
 	b := Matrix{}
 
 	got := a.Add(b)
 	if len(got) != 0 {
 		t.Errorf("Add of empty matrices result length = %d; want 0", len(got))
+	}
+}
+
+func TestMul(t *testing.T) {
+	a := Matrix{
+		{1, 2},
+		{3, 4},
+	}
+	b := Matrix{
+		{2, 0},
+		{1, 2},
+	}
+	expected := Matrix{
+		{4, 4},
+		{10, 8},
+	}
+
+	result := a.Mul(b)
+	if result.Neq(expected) {
+		t.Errorf("Mul() failed. Expected %v, got %v", expected, result)
+	}
+}
+
+func TestMul_DimensionMismatch(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("Expected panic on multiplication dimension mismatch")
+		}
+	}()
+
+	a := Matrix{
+		{1, 2},
+	}
+	b := Matrix{
+		{1, 2},
+	}
+	_ = a.Mul(b)
+}
+
+func TestEq(t *testing.T) {
+	a := Matrix{
+		{1, 2},
+		{3, 4},
+	}
+	b := Matrix{
+		{1, 2},
+		{3, 4},
+	}
+	c := Matrix{
+		{1, 2},
+		{4, 3},
+	}
+
+	if !a.Eq(b) {
+		t.Errorf("Eq failed: matrices should be equal")
+	}
+
+	if a.Eq(c) {
+		t.Errorf("Eq failed: matrices should NOT be equal")
+	}
+}
+
+func TestNeq(t *testing.T) {
+	a := Matrix{
+		{1, 2},
+	}
+	b := Matrix{
+		{1, 2},
+	}
+	c := Matrix{
+		{2, 1},
+	}
+
+	if a.Neq(b) {
+		t.Errorf("Neq failed: matrices should be equal (Neq=false)")
+	}
+
+	if !a.Neq(c) {
+		t.Errorf("Neq failed: matrices should NOT be equal (Neq=true)")
+	}
+}
+
+func TestEqApprox(t *testing.T) {
+	// Matrices con diferencia menor que la tolerancia (pasa)
+	a := Matrix{
+		{1.0, 2.0 + 0.9e-8}, // diferencia 0.9e-8 < 1e-8 tolerancia
+		{3.0, 4.0},
+	}
+	b := Matrix{
+		{1.0, 2.0},
+		{3.0, 4.0},
+	}
+	// Matriz con diferencia justo mayor que la tolerancia (falla)
+	c := Matrix{
+		{1.0, 2.0 + 1.1e-8}, // diferencia 1.1e-8 > 1e-8 tolerancia
+		{3.0, 4.0},
+	}
+
+	oldTol := ErrorTolerance
+	ErrorTolerance = 1e-8
+	defer func() { ErrorTolerance = oldTol }()
+
+	if !a.EqApprox(b) {
+		t.Errorf("EqApprox failed: matrices should be approximately equal")
+	}
+
+	if c.EqApprox(b) {
+		t.Errorf("EqApprox failed: matrices should NOT be approximately equal")
+	}
+
+	// Test con dimensiones distintas
+	d := Matrix{{1, 2}}
+	e := Matrix{{1, 2}, {0, 0}}
+	if d.EqApprox(e) {
+		t.Errorf("EqApprox failed: matrices with different dims should NOT be equal")
+	}
+}
+
+func TestNeqApprox(t *testing.T) {
+	a := Matrix{
+		{1.0, 2.0},
+	}
+	// Diferencia menor que tolerancia -> deberían considerarse iguales -> NeqApprox false
+	b := Matrix{
+		{1.0, 2.0 + 0.9e-6}, // diferencia 0.9e-6 < 1e-6
+	}
+	// Diferencia mayor que tolerancia -> deberían considerarse diferentes -> NeqApprox true
+	c := Matrix{
+		{1.0, 2.0 + 1.1e-6}, // diferencia 1.1e-6 > 1e-6
+	}
+
+	oldTol := ErrorTolerance
+	ErrorTolerance = 1e-6
+	defer func() { ErrorTolerance = oldTol }()
+
+	if a.NeqApprox(b) {
+		t.Errorf("NeqApprox failed: matrices should be approximately equal (NeqApprox=false)")
+	}
+
+	if !a.NeqApprox(c) {
+		t.Errorf("NeqApprox failed: matrices should NOT be approximately equal (NeqApprox=true)")
 	}
 }
