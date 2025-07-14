@@ -68,7 +68,7 @@ func (a Matrix) Add(b Matrix) Matrix {
 		)
 	}
 
-	result := make(Matrix, rowsA) // [[], [], ..., []] con rowsA filas
+	result := make(Matrix, rowsA) // [[], [], ..., []] with rowsA rows
 	for i := range rowsA {
 		result[i] = make([]float64, colsA)
 		for j := range colsA {

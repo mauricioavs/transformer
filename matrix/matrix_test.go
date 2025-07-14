@@ -223,18 +223,18 @@ func TestNeq(t *testing.T) {
 }
 
 func TestEqApprox(t *testing.T) {
-	// Matrices con diferencia menor que la tolerancia (pasa)
+	// Matrices with difference less than tolerance (should be equal)
 	a := Matrix{
-		{1.0, 2.0 + 0.9e-8}, // diferencia 0.9e-8 < 1e-8 tolerancia
+		{1.0, 2.0 + 0.9e-8}, // difference 0.9e-8 < 1e-8 tolerance
 		{3.0, 4.0},
 	}
 	b := Matrix{
 		{1.0, 2.0},
 		{3.0, 4.0},
 	}
-	// Matriz con diferencia justo mayor que la tolerancia (falla)
+	// Matrix with difference just above tolerance (should fail equality)
 	c := Matrix{
-		{1.0, 2.0 + 1.1e-8}, // diferencia 1.1e-8 > 1e-8 tolerancia
+		{1.0, 2.0 + 1.1e-8}, // difference 1.1e-8 > 1e-8 tolerance
 		{3.0, 4.0},
 	}
 
@@ -250,11 +250,11 @@ func TestEqApprox(t *testing.T) {
 		t.Errorf("EqApprox failed: matrices should NOT be approximately equal")
 	}
 
-	// Test con dimensiones distintas
+	// Test with different dimensions (should be considered different)
 	d := Matrix{{1, 2}}
 	e := Matrix{{1, 2}, {0, 0}}
 	if d.EqApprox(e) {
-		t.Errorf("EqApprox failed: matrices with different dims should NOT be equal")
+		t.Errorf("EqApprox failed: matrices with different dimensions should NOT be equal")
 	}
 }
 
@@ -262,13 +262,13 @@ func TestNeqApprox(t *testing.T) {
 	a := Matrix{
 		{1.0, 2.0},
 	}
-	// Diferencia menor que tolerancia -> deberían considerarse iguales -> NeqApprox false
+	// Difference less than tolerance -> should be considered equal -> NeqApprox false
 	b := Matrix{
-		{1.0, 2.0 + 0.9e-6}, // diferencia 0.9e-6 < 1e-6
+		{1.0, 2.0 + 0.9e-6}, // difference 0.9e-6 < 1e-6
 	}
-	// Diferencia mayor que tolerancia -> deberían considerarse diferentes -> NeqApprox true
+	// Difference greater than tolerance -> should be considered different -> NeqApprox true
 	c := Matrix{
-		{1.0, 2.0 + 1.1e-6}, // diferencia 1.1e-6 > 1e-6
+		{1.0, 2.0 + 1.1e-6}, // difference 1.1e-6 > 1e-6
 	}
 
 	oldTol := ErrorTolerance
